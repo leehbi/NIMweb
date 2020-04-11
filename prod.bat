@@ -1,0 +1,1 @@
+nim c -d:release --opt:size --threads:on app.nim

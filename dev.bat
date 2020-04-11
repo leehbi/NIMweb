@@ -1,0 +1,1 @@
+nim c app.nim
