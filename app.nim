@@ -2,49 +2,37 @@ import jester
 import strutils
 import httpcore
 
-const REGISTER_FORM = """<html>
-    <head>
-    <title>Test PAge</title>
-    </head>
-    <body>
-        <h3>Register</h3>
-        Enter your email address to sign up
-        <p>
-            <b>$1</b>
-        <p>
-    <form action="/register-form" method="POST">
-    <input type="text" name="email" /> 
-        <button type="submit">Send Email Address</button>
-    </form>
-    </body>
-</html>
-"""
+include "registerform.nimf"
+
+proc checkEmailFormat(email: string): seq[string] =
+  result = @[]
+  var parts = email.split('@')
+  if parts.len < 2:
+    result.add "MissingAtSymbol"
+  elif parts.len > 2:
+    result.add "TooManyAtSymbols"
+  if email.contains(" "):
+    result.add "ContainsSpace"
+  if email == "":
+    result.add "EmailEmpty"
 
 settings:
   port = Port(5001)
 
+
 routes:
-    get "/":
-        resp "TODO"
-
-    get "/register-form":
-        resp REGISTER_FORM.format(" ")
-
-    get "/register-form/@err":
-        resp REGISTER_FORM.format("err")
-
-    post "/register-form":
-        if request.params["email"]=="":
-            redirect "/register-form/$1".format("Need Email Address")
-        else:
-            redirect "/hello/$1".format(request.params["email"])
-
-    get "/hello/@email":
-        if @"email" == "123":
-            resp Http307
-        else:
-            resp "hello $1!".format(@"email")
-        
-    post "/":
-        resp "TODO"
-
+  get "/":
+    resp "hello world"
+  get "/register-form":
+    resp registerForm(@[])
+  get "/register-form/@err":
+    let errors = @"err".split("|")
+    resp registerForm(errors)
+  post "/register-form":
+    let errors = checkEmailFormat(request.params["email"])
+    if errors.len > 0:
+      redirect "/register-form/$1".format(errors.join("|"))
+    else:
+      redirect "/hello/$1".format(request.params["email"])
+  get "/hello/@email":
+    resp "hello $1!".format(@"email")
